@@ -16,8 +16,7 @@ export function getStripe(): Stripe {
     throw new Error("STRIPE_SECRET_KEY is not set");
   }
   stripe = new Stripe(key, {
-    // Pin an API version for deterministic behavior.
-    apiVersion: "2025-08-27.basil",
+    // Use the SDK's pinned API version for deterministic behavior.
     appInfo: { name: "AdCrewOS" },
   });
   return stripe;
