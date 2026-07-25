@@ -44,3 +44,12 @@ build prompt's instruction ("note it briefly in a DECISIONS.md, and keep buildin
 - **Meta App Review for `ads_management`** — required before live Meta actions.
 - adcrewos.com DNS pointing to Vercel.
 - Provisioning of Neon/Upstash/Blob/Resend/Twilio accounts + keys.
+
+## Deploy checkpoint (2026-07-25)
+- Repo moved to `adteamofone/AdCrewOS-web` (option 2, per Charles). Old `adcrewos` repo untouched.
+- README rewritten as a plain-English, non-technical user guide; technical/dev+deploy docs moved to DEVELOPMENT.md.
+- Vercel account (`ad-crew-os`, hobby) is brand-new: **0 integrations installed, GitHub not connected**. Two steps require a one-time OAuth click in the Vercel dashboard that an API token cannot perform:
+  1. Connect GitHub + import the repo (installs the Vercel GitHub App).
+  2. Provision Postgres — marketplace store creation (`POST /v1/storage/stores/integration/direct`) needs an installed integration config (`icfg_...`); none exist yet, so a provider (Neon/Supabase) must be connected once via the Storage tab.
+- Redis (Upstash) and Blob are optional for the demo preview: `redis.ts` falls back to no-op locks; Blob only backs logo upload. Postgres + secrets are the only hard requirements for a working demo-mode preview.
+- Prod secrets (NEXTAUTH_SECRET, TOKEN_ENCRYPTION_KEY, CRON_SECRET) generated and held for injection once the project exists.
