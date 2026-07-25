@@ -1,26 +1,78 @@
 @import "tailwindcss";
 
+/*
+  AdCrewOS brand tokens — dark mode only (no light theme, no toggle).
+  Source of truth: Brand_Assets.txt (condensed in DECISIONS.md).
+*/
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #050816;
+  --surface: #0b1220;
+  --surface-2: #0f1a2e;
+  --border: #1c2740;
+  --primary: #0ea5e9;
+  --secondary: #06b6d4;
+  --success: #22c55e;
+  --warn: #f97316;
+  --error: #ef4444;
+  --text: #f9fafb;
+  --text-invert: #020617;
+  --muted: #6b7280;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-success: var(--success);
+  --color-warn: var(--warn);
+  --color-error: var(--error);
+  --color-text: var(--text);
+  --color-text-invert: var(--text-invert);
+  --color-muted: var(--muted);
+
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+
+  --font-display: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
+  background: var(--bg);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, .font-display {
+  font-family: var(--font-display);
+}
+
+/* Thin, cockpit-style scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: var(--border); border-radius: 9999px; }
+
+/* Subtle grid backdrop used on marketing + auth surfaces */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(14, 165, 233, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(14, 165, 233, 0.06) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+.glow-primary {
+  box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.25), 0 20px 60px -20px rgba(14, 165, 233, 0.35);
 }

@@ -1,0 +1,241 @@
+// AdCrewOS data model. See DECISIONS.md for schema rationale.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Enums ----------
+
+enum Tier {
+  SOLO
+  AGENCY
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+  UNPAID
+  PENDING
+}
+
+enum Platform {
+  GOOGLE
+  META
+}
+
+enum Metric {
+  CPC
+  CPA
+  ROAS
+}
+
+enum AccountStatus {
+  ACTIVE
+  PAUSED
+  DISCONNECTED
+}
+
+enum AutomationType {
+  AUTO_PAUSE
+  SCALE_PROPOSAL
+  SCALE_APPLIED
+  RESUME
+  POLL_ERROR
+}
+
+enum AutomationStatus {
+  // For AUTO_PAUSE / info events
+  LOGGED
+  // For SCALE_PROPOSAL lifecycle
+  PENDING
+  APPROVED
+  DISMISSED
+  EXECUTED
+  EXPIRED
+}
+
+// ---------- Core domain ----------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  phone        String?
+  passwordHash String?
+  authProvider String   @default("credentials") // credentials | google | meta
+  emailVerified DateTime?
+  image        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  subscription  Subscription?
+  adAccounts    AdAccount[]
+  reports       Report[]
+  brandSetting  BrandSetting?
+  accounts      Account[]
+  sessions      Session[]
+
+  @@index([email])
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String             @unique
+  tier                 Tier               @default(SOLO)
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  status               SubscriptionStatus @default(PENDING)
+  trialEndsAt          DateTime?
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AdAccount {
+  id           String        @id @default(cuid())
+  userId       String
+  platform     Platform
+  externalId   String        // customer id / act_ id (or demo-xxx)
+  name         String
+  currency     String        @default("USD")
+  accessToken  String?       // encrypted at rest
+  refreshToken String?       // encrypted at rest
+  tokenExpiry  DateTime?
+  isDemo       Boolean       @default(false)
+  status       AccountStatus @default(ACTIVE)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targets          Target[]
+  metricSnapshots  MetricSnapshot[]
+  automationEvents AutomationEvent[]
+  reports          Report[]
+
+  @@unique([userId, platform, externalId])
+  @@index([userId])
+}
+
+model Target {
+  id             String   @id @default(cuid())
+  adAccountId    String   @unique
+  metric         Metric   @default(ROAS)
+  targetValue    Float
+  // Protective: breach -> auto-pause. Interpreted per metric (see engine).
+  pauseThreshold Float
+  // Approval-gated: beat -> propose scale.
+  scaleThreshold Float
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  adAccount AdAccount @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
+}
+
+model MetricSnapshot {
+  id          String   @id @default(cuid())
+  adAccountId String
+  ts          DateTime @default(now())
+  spend       Float    @default(0)
+  clicks      Int      @default(0)
+  conversions Float    @default(0)
+  ctr         Float    @default(0)
+  cpc         Float    @default(0)
+  cpa         Float    @default(0)
+  roas        Float    @default(0)
+
+  adAccount AdAccount @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
+
+  @@index([adAccountId, ts])
+}
+
+model AutomationEvent {
+  id          String           @id @default(cuid())
+  adAccountId String
+  type        AutomationType
+  status      AutomationStatus @default(LOGGED)
+  reason      String
+  metric      Metric?
+  observed    Float?
+  threshold   Float?
+  // proposed budget change details for SCALE_PROPOSAL
+  proposedPct Int?
+  createdAt   DateTime         @default(now())
+  resolvedAt  DateTime?
+
+  adAccount AdAccount @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
+
+  @@index([adAccountId, createdAt])
+  @@index([status])
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  userId      String
+  adAccountId String
+  periodStart DateTime
+  periodEnd   DateTime
+  pdfUrl      String
+  createdAt   DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adAccount AdAccount @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model BrandSetting {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  logoUrl   String?  // Agency-only
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ---------- Auth.js (NextAuth) adapter tables ----------
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
