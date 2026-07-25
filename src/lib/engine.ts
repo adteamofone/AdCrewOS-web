@@ -134,6 +134,24 @@ export async function runAccountCheck(
   if (decision.action === "pause") {
     if (account.status === "PAUSED") return { action: "none" };
 
+    // Execute the protective pause on the platform (no-op for demo accounts).
+    try {
+      const { pauseAccountCampaigns } = await import("@/lib/platform");
+      await pauseAccountCampaigns(account);
+    } catch (err) {
+      // Log but still mark paused locally so the operator sees the intent.
+      await prisma.automationEvent.create({
+        data: {
+          adAccountId: account.id,
+          type: "POLL_ERROR",
+          status: "LOGGED",
+          reason: `Pause requested but platform call failed: ${
+            err instanceof Error ? err.message : "unknown error"
+          }`,
+        },
+      });
+    }
+
     await prisma.$transaction([
       prisma.adAccount.update({
         where: { id: account.id },
