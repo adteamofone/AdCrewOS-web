@@ -7,7 +7,16 @@ import { SubscriptionStatus, Tier } from "@prisma/client";
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
 
 export function priceIdForTier(tier: Tier): string {
-  const id = tier === "AGENCY" ? process.env.STRIPE_PRICE_AGENCY : process.env.STRIPE_PRICE_SOLO;
+  if (tier === "WATCHDOG") {
+    // Free tier — never billed, so it must never reach Checkout.
+    throw new Error("The Watchdog tier is free and has no Stripe price.");
+  }
+  const map: Partial<Record<Tier, string | undefined>> = {
+    SOLO: process.env.STRIPE_PRICE_SOLO,
+    PRO: process.env.STRIPE_PRICE_PRO,
+    AGENCY: process.env.STRIPE_PRICE_AGENCY,
+  };
+  const id = map[tier];
   if (!id) {
     throw new Error(
       `Missing Stripe price for ${tier}. Run \`npm run bootstrap:stripe\` and set STRIPE_PRICE_${tier}.`,

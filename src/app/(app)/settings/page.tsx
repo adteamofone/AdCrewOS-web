@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { Badge, Card } from "@/components/ui/primitives";
+import { Badge, ButtonLink, Card } from "@/components/ui/primitives";
 import { SeedDemoButton } from "@/components/dashboard/seed-demo-button";
 import { BillingPortalButton } from "@/components/settings/billing-portal-button";
 import { AlertsForm } from "@/components/settings/alerts-form";
@@ -28,6 +28,7 @@ export default async function SettingsPage() {
   const tier = user.subscription?.tier ?? "SOLO";
   const plan = planForTier(tier);
   const isAgency = tier === "AGENCY";
+  const isWatchdog = tier === "WATCHDOG";
 
   return (
     <div className="space-y-8">
@@ -41,16 +42,29 @@ export default async function SettingsPage() {
           <div>
             <h2 className="font-display text-lg font-semibold text-text">Plan &amp; billing</h2>
             <p className="text-sm text-muted">
-              {plan.name} · {plan.priceLabel}/mo
+              {plan.name} · {plan.paid ? `${plan.priceLabel}/mo` : "Free"}
             </p>
           </div>
           <Badge tone={user.subscription?.status === "ACTIVE" || user.subscription?.status === "TRIALING" ? "success" : "muted"}>
             {(user.subscription?.status ?? "PENDING").toLowerCase()}
           </Badge>
         </div>
-        <div className="mt-4">
-          <BillingPortalButton />
-        </div>
+        {isWatchdog ? (
+          <div className="mt-4 rounded-lg border border-primary/30 bg-primary/10 p-4">
+            <p className="text-sm text-text">
+              You&apos;re on the free <strong>Watchdog</strong> plan — we watch and alert, but we
+              don&apos;t touch your ads. Upgrade to let AdCrewOS auto-pause the losers and scale the
+              winners for you.
+            </p>
+            <ButtonLink href="/signup?tier=SOLO" variant="primary" className="mt-3">
+              Upgrade to autopilot
+            </ButtonLink>
+          </div>
+        ) : (
+          <div className="mt-4">
+            <BillingPortalButton />
+          </div>
+        )}
       </Card>
 
       <Card className="p-6">

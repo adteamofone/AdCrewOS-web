@@ -8,7 +8,7 @@ const schema = z.object({
   email: z.string().email(),
   password: z.string().min(8, "Password must be at least 8 characters"),
   name: z.string().min(1).max(120).optional(),
-  tier: z.enum(["SOLO", "AGENCY"]),
+  tier: z.enum(["WATCHDOG", "SOLO", "PRO", "AGENCY"]),
 });
 
 /**
@@ -38,6 +38,10 @@ export async function POST(req: Request) {
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);
+  const tier = parsed.data.tier as Tier;
+  // Watchdog is free: activate immediately (no Stripe confirmation needed).
+  // Paid tiers stay PENDING until the Stripe webhook confirms Checkout.
+  const status = tier === "WATCHDOG" ? "ACTIVE" : "PENDING";
   const user = await prisma.user.create({
     data: {
       email,
@@ -46,8 +50,8 @@ export async function POST(req: Request) {
       authProvider: "credentials",
       subscription: {
         create: {
-          tier: parsed.data.tier as Tier,
-          status: "PENDING",
+          tier,
+          status,
         },
       },
     },

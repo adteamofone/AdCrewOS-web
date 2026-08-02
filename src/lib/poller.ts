@@ -2,7 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { acquireLock, releaseLock } from "@/lib/redis";
 import { runAccountCheck } from "@/lib/engine";
 import { appendDemoSnapshot } from "@/lib/demo";
-import { alertPause, alertScaleProposal } from "@/lib/alerts";
+import { alertPause, alertMonitor, alertScaleProposal } from "@/lib/alerts";
+import { capabilities } from "@/lib/plans";
 
 /**
  * Poll every connected account: refresh metrics -> write MetricSnapshot ->
@@ -12,7 +13,16 @@ import { alertPause, alertScaleProposal } from "@/lib/alerts";
 export async function pollAllAccounts(): Promise<{ polled: number; actions: number }> {
   const accounts = await prisma.adAccount.findMany({
     where: { status: { not: "DISCONNECTED" } },
-    include: { targets: true, user: { select: { email: true, phone: true } } },
+    include: {
+      targets: true,
+      user: {
+        select: {
+          email: true,
+          phone: true,
+          subscription: { select: { tier: true } },
+        },
+      },
+    },
   });
 
   let polled = 0;
@@ -30,11 +40,20 @@ export async function pollAllAccounts(): Promise<{ polled: number; actions: numb
       }
       polled++;
 
-      // 2) run engine with alerts
-      const decision = await runAccountCheck(account, {
-        onPause: (acc, d) => alertPause(account.user, acc, d),
-        onScaleProposal: (acc, d) => alertScaleProposal(account.user, acc, d),
-      });
+      // 2) run engine with alerts. Watchdog (free) accounts run monitor-only:
+      //    alert on breach, but never auto-pause or propose a scale.
+      const tier = account.user.subscription?.tier ?? "SOLO";
+      const monitorOnly = capabilities(tier).monitorOnly;
+
+      const decision = await runAccountCheck(
+        account,
+        {
+          onPause: (acc, d) => alertPause(account.user, acc, d),
+          onMonitorAlert: (acc, d) => alertMonitor(account.user, acc, d),
+          onScaleProposal: (acc, d) => alertScaleProposal(account.user, acc, d),
+        },
+        { monitorOnly },
+      );
       if (decision.action !== "none") actions++;
     } finally {
       await releaseLock(`poll:${account.id}`);

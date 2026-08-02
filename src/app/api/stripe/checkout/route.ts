@@ -7,7 +7,7 @@ import { isStripeConfigured } from "@/lib/stripe";
 import { rateLimit } from "@/lib/ratelimit";
 import { Tier } from "@prisma/client";
 
-const schema = z.object({ tier: z.enum(["SOLO", "AGENCY"]).optional() });
+const schema = z.object({ tier: z.enum(["SOLO", "PRO", "AGENCY"]).optional() });
 
 export async function POST(req: Request) {
   if (!isStripeConfigured()) {
@@ -28,6 +28,11 @@ export async function POST(req: Request) {
 
   const sub = await prisma.subscription.findUnique({ where: { userId: session.user.id } });
   const tier: Tier = requestedTier ?? sub?.tier ?? "SOLO";
+
+  // Watchdog is free — no Checkout. Caller should route straight to onboarding.
+  if (tier === "WATCHDOG") {
+    return NextResponse.json({ error: "The Watchdog plan is free." }, { status: 400 });
+  }
 
   try {
     const url = await createCheckoutSession(session.user.id, tier);

@@ -11,7 +11,10 @@ export default async function SignupPage({
   searchParams: Promise<{ tier?: string; checkout?: string }>;
 }) {
   const sp = await searchParams;
-  const tier = sp.tier === "AGENCY" ? "AGENCY" : "SOLO";
+  const validTiers = ["WATCHDOG", "SOLO", "PRO", "AGENCY"] as const;
+  const tier = (validTiers as readonly string[]).includes(sp.tier ?? "")
+    ? (sp.tier as (typeof validTiers)[number])
+    : "SOLO";
   const canceled = sp.checkout === "canceled";
 
   return (

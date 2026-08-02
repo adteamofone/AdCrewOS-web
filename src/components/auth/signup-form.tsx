@@ -5,11 +5,15 @@ import { signIn } from "next-auth/react";
 import { Button, Card, Input, Label, Badge } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 
-type Tier = "SOLO" | "AGENCY";
+type Tier = "WATCHDOG" | "SOLO" | "PRO" | "AGENCY";
+
+const TIERS: Tier[] = ["WATCHDOG", "SOLO", "PRO", "AGENCY"];
 
 const PLAN_META: Record<Tier, { name: string; price: string; note: string }> = {
-  SOLO: { name: "Solo", price: "$97/mo", note: "1 account per platform" },
-  AGENCY: { name: "Agency", price: "$297/mo", note: "Up to 10 client accounts" },
+  WATCHDOG: { name: "Watchdog", price: "Free", note: "Monitor + alerts, 1 account" },
+  SOLO: { name: "Solo", price: "$89/mo", note: "1 account per platform" },
+  PRO: { name: "Pro", price: "$199/mo", note: "Up to 3 accounts per platform" },
+  AGENCY: { name: "Agency", price: "$399/mo", note: "Up to 10 client accounts" },
 };
 
 export function SignupForm({
@@ -44,6 +48,12 @@ export function SignupForm({
       const res = await signIn("credentials", { email, password, redirect: false });
       if (res?.error) throw new Error("Signed up, but sign-in failed. Try logging in.");
 
+      // Free Watchdog tier skips billing entirely — straight to onboarding.
+      if (tier === "WATCHDOG") {
+        window.location.href = "/onboarding";
+        return;
+      }
+
       // Kick off Stripe Checkout. If billing isn't configured (dev/sandbox),
       // fall through to onboarding so the product is fully usable.
       const checkout = await fetch("/api/stripe/checkout", {
@@ -73,7 +83,7 @@ export function SignupForm({
       <h2 className="font-display text-xl font-bold text-text">Create your account</h2>
 
       <div className="mt-4 grid grid-cols-2 gap-3">
-        {(["SOLO", "AGENCY"] as Tier[]).map((t) => (
+        {TIERS.map((t) => (
           <button
             key={t}
             type="button"
@@ -148,7 +158,11 @@ export function SignupForm({
         {error && <p className="text-sm text-error">{error}</p>}
 
         <Button type="submit" size="lg" className="w-full" disabled={loading}>
-          {loading ? "Setting up…" : "Start 7-day free trial"}
+          {loading
+            ? "Setting up…"
+            : tier === "WATCHDOG"
+              ? "Start free — no card needed"
+              : "Start 7-day free trial"}
         </Button>
         <p className="text-center text-xs text-muted">
           By continuing you agree to our{" "}

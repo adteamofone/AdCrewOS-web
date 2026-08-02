@@ -12,7 +12,9 @@ datasource db {
 // ---------- Enums ----------
 
 enum Tier {
+  WATCHDOG
   SOLO
+  PRO
   AGENCY
 }
 
@@ -45,6 +47,7 @@ enum AccountStatus {
 
 enum AutomationType {
   AUTO_PAUSE
+  MONITOR_ALERT
   SCALE_PROPOSAL
   SCALE_APPLIED
   RESUME

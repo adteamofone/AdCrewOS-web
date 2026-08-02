@@ -28,5 +28,6 @@ export function isStripeConfigured(): boolean {
 
 export const PRICE_ENV = {
   SOLO: "STRIPE_PRICE_SOLO",
+  PRO: "STRIPE_PRICE_PRO",
   AGENCY: "STRIPE_PRICE_AGENCY",
 } as const;
