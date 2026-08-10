@@ -168,46 +168,60 @@ function HowItWorks() {
 }
 
 function Pricing() {
-  const plans = [PLANS.SOLO, PLANS.AGENCY] as const;
+  const plans = [PLANS.WATCHDOG, PLANS.SOLO, PLANS.PRO, PLANS.AGENCY] as const;
   return (
     <section id="pricing" className="mx-auto max-w-6xl px-5 py-20">
       <div className="text-center">
         <h2 className="font-display text-3xl font-bold tracking-tight text-text sm:text-4xl">
           Priced like a tool. Works like a team.
         </h2>
-        <p className="mt-3 text-muted">Both plans start with a 7-day free trial. Monthly. Cancel anytime.</p>
+        <p className="mt-3 text-muted">
+          Start free and watch your spend. Upgrade to let it act for you — paid plans include a
+          7-day free trial. Monthly. Cancel anytime.
+        </p>
       </div>
-      <div className="mx-auto mt-12 grid max-w-4xl gap-6 md:grid-cols-2">
-        {plans.map((p, idx) => (
-          <Card key={p.tier} className={idx === 1 ? "border-primary/50 p-8 glow-primary" : "p-8"}>
-            <div className="flex items-center justify-between">
-              <h3 className="font-display text-xl font-bold text-text">{p.name}</h3>
-              {idx === 1 && <Badge tone="primary">For agencies</Badge>}
-            </div>
-            <p className="mt-1 text-sm text-muted">{p.tagline}</p>
-            <div className="mt-5 flex items-baseline gap-1">
-              <span className="font-display text-4xl font-extrabold text-text">{p.priceLabel}</span>
-              <span className="text-muted">/mo</span>
-            </div>
-            <ul className="mt-6 space-y-2.5 text-sm">
-              {p.features.map((f) => (
-                <li key={f} className="flex items-start gap-2.5 text-text/90">
-                  <span className="mt-0.5 text-success">✓</span>
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <ButtonLink
-              href={`/signup?tier=${p.tier}`}
-              className="mt-7 w-full"
-              variant={idx === 1 ? "primary" : "outline"}
+      <div className="mx-auto mt-12 grid max-w-6xl gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {plans.map((p) => {
+          const isPopular = p.tier === "PRO";
+          const isFree = !p.paid;
+          return (
+            <Card
+              key={p.tier}
+              className={isPopular ? "relative border-primary/50 p-6 glow-primary" : "p-6"}
             >
-              Start free
-            </ButtonLink>
-          </Card>
-        ))}
+              <div className="flex items-center justify-between">
+                <h3 className="font-display text-lg font-bold text-text">{p.name}</h3>
+                {isPopular && <Badge tone="primary">Most popular</Badge>}
+                {isFree && <Badge tone="success">Free forever</Badge>}
+              </div>
+              <p className="mt-1 min-h-[2.5rem] text-sm text-muted">{p.tagline}</p>
+              <div className="mt-4 flex items-baseline gap-1">
+                <span className="font-display text-3xl font-extrabold text-text">{p.priceLabel}</span>
+                {p.paid && <span className="text-muted">/mo</span>}
+              </div>
+              <ul className="mt-5 space-y-2.5 text-sm">
+                {p.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2.5 text-text/90">
+                    <span className="mt-0.5 text-success">✓</span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <ButtonLink
+                href={`/signup?tier=${p.tier}`}
+                className="mt-6 w-full"
+                variant={isPopular ? "primary" : "outline"}
+              >
+                {isFree ? "Start free" : "Start 7-day trial"}
+              </ButtonLink>
+            </Card>
+          );
+        })}
       </div>
-      <p className="mt-6 text-center text-xs text-muted">Pricing shown may be adjusted before general availability.</p>
+      <p className="mt-6 text-center text-xs text-muted">
+        Founding members lock their price for life. Pricing shown may be adjusted before general
+        availability.
+      </p>
     </section>
   );
 }

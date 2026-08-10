@@ -43,7 +43,7 @@ npm test                    # engine, billing, demo-path, and cron/poller suites
 
 ```bash
 STRIPE_SECRET_KEY=sk_test_... npm run bootstrap:stripe
-# prints STRIPE_PRICE_SOLO / STRIPE_PRICE_AGENCY — add them to your env
+# prints STRIPE_PRICE_SOLO / STRIPE_PRICE_PRO / STRIPE_PRICE_AGENCY — add them to your env
 ```
 
 ## Deploy (Vercel)

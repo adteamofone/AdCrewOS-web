@@ -109,16 +109,33 @@ type Alerts = {
     account: AdAccount,
     decision: Extract<Decision, { action: "propose_scale" }>,
   ) => Promise<void>;
+  /** Fired on a breach when running in monitor-only mode (Watchdog tier). */
+  onMonitorAlert?: (
+    account: AdAccount,
+    decision: Extract<Decision, { action: "pause" }>,
+  ) => Promise<void>;
+};
+
+export type EngineOptions = {
+  /**
+   * Monitor-only (Watchdog / free tier): detect + alert + log on a breach, but
+   * never auto-pause and never propose a scale. The operator stays hands-on.
+   */
+  monitorOnly?: boolean;
 };
 
 /**
  * Run the engine for a single account. Idempotent within a poll:
  *  - won't re-pause an already-paused account
  *  - won't stack scale proposals while one is PENDING
+ *
+ * In `monitorOnly` mode no platform action is taken: a breach logs a
+ * MONITOR_ALERT + fires an alert, and scale beats are ignored.
  */
 export async function runAccountCheck(
   account: AdAccount & { targets: Target[] },
   alerts: Alerts = {},
+  opts: EngineOptions = {},
 ): Promise<Decision> {
   const target = account.targets[0];
   if (!target) return { action: "none" };
@@ -130,6 +147,39 @@ export async function runAccountCheck(
   if (!snapshot) return { action: "none" };
 
   const decision = evaluate(target, snapshot);
+
+  // Watchdog / monitor-only: alert on breach, never act.
+  if (opts.monitorOnly) {
+    if (decision.action === "pause") {
+      // Dedupe: only one open MONITOR_ALERT per account until it recovers.
+      const recentAlert = await prisma.automationEvent.findFirst({
+        where: { adAccountId: account.id, type: "MONITOR_ALERT" },
+        orderBy: { createdAt: "desc" },
+      });
+      const alreadyAlerted =
+        recentAlert &&
+        Date.now() - new Date(recentAlert.createdAt).getTime() < 6 * 60 * 60 * 1000;
+      if (alreadyAlerted) return { action: "none" };
+
+      await prisma.automationEvent.create({
+        data: {
+          adAccountId: account.id,
+          type: "MONITOR_ALERT",
+          status: "LOGGED",
+          reason: decision.reason.replace(
+            "Auto-paused to stop the bleed.",
+            "Heads up — this breached your limit. Upgrade to auto-pause it for you.",
+          ),
+          metric: decision.metric,
+          observed: decision.observed,
+          threshold: decision.threshold,
+        },
+      });
+      await alerts.onMonitorAlert?.(account, decision);
+      return decision;
+    }
+    return { action: "none" };
+  }
 
   if (decision.action === "pause") {
     if (account.status === "PAUSED") return { action: "none" };

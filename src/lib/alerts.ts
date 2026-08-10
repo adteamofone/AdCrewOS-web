@@ -52,6 +52,29 @@ export async function alertPause(
   ]);
 }
 
+export async function alertMonitor(
+  user: Pick<User, "email" | "phone">,
+  account: AdAccount,
+  decision: Extract<Decision, { action: "pause" }>,
+): Promise<void> {
+  const subject = `👀 Heads up: ${account.name} breached your limit`;
+  await Promise.allSettled([
+    sendEmail(
+      user.email,
+      subject,
+      `<h2>${account.name} just crossed your limit</h2><p>${decision.reason}</p>
+       <p>You're on the free Watchdog plan, so we didn't touch it — you're still in the driver's seat.</p>
+       <p><a href="${APP_URL}/settings">Upgrade to auto-pause this for you →</a></p>`,
+    ),
+    user.phone
+      ? sendSms(
+          user.phone,
+          `AdCrewOS Watchdog: ${account.name} breached your limit. ${decision.reason} Upgrade to auto-pause: ${APP_URL}/settings`,
+        )
+      : Promise.resolve(),
+  ]);
+}
+
 export async function alertScaleProposal(
   user: Pick<User, "email" | "phone">,
   account: AdAccount,
