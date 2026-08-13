@@ -105,3 +105,24 @@ Live end-to-end verified against production (demo-data path):
 
 Still gated on external credentials (env vars already wired): Stripe live/test keys,
 Resend, Twilio, Google Ads OAuth + dev token, Meta app + App Review, adcrewos.com DNS.
+
+## UX fixes from Charles's live review (2026-08-13)
+
+1. **Dedicated /login page** — "Log in" previously pointed at /signup and Auth.js used
+   /signup as its signIn page; there was no way for an existing user to just log in, and
+   no cross-links. Added /login (email/password + Google/Meta), signup now links to
+   login and vice-versa, `pages.signIn` → /login, unauthenticated redirects → /login.
+   Password reset is a mailto:support@adcrewos.com placeholder until Resend is live.
+2. **Mobile navigation** — the app sidebar was `hidden md:flex`, so below 768px the
+   cockpit/reports/settings had NO navigation at all (the reported "no menu, can't reach
+   reports, can't get back from settings"). Added a fixed mobile top bar with hamburger
+   slide-down menu (nav + sign out); app main gets pt-14 on mobile.
+3. **Account drill-down** — cockpit cards weren't clickable. Added
+   /dashboard/accounts/[id]: KPI grid (primary metric, spend/clicks/conv 24h, CTR/CPC/
+   CPA/ROAS), metric + spend-per-poll charts (336-poll history), guardrails card
+   (target/pause/scale), per-account activity feed, Resume + Generate-report actions.
+   Card title and a "Details →" link route to it. Campaign-grain breakdown *within* an
+   account needs campaign-level snapshots — logged as v1.1 (data model is account-grain).
+
+Note: DB-backed tests (vitest) expect Postgres at 127.0.0.1:5433 or DATABASE_URL; run
+against Neon when no local pg is available. Suite 16/16 green; build passes (19 routes).

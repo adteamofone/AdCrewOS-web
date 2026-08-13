@@ -8,7 +8,7 @@ export const metadata = { title: "Reports — AdCrewOS" };
 
 export default async function ReportsPage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/signup");
+  if (!session?.user?.id) redirect("/login");
 
   const [accounts, reports] = await Promise.all([
     prisma.adAccount.findMany({ where: { userId: session.user.id }, orderBy: { createdAt: "asc" } }),

@@ -81,6 +81,10 @@ export function SignupForm({
         </div>
       )}
       <h2 className="font-display text-xl font-bold text-text">Create your account</h2>
+      <p className="mt-1 text-sm text-muted">
+        Already have an account?{" "}
+        <a href="/login" className="text-primary hover:underline">Log in</a>
+      </p>
 
       <div className="mt-4 grid grid-cols-2 gap-3">
         {TIERS.map((t) => (

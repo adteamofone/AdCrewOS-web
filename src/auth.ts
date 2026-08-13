@@ -64,7 +64,7 @@ export const authConfig: NextAuthConfig = {
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   trustHost: true,
-  pages: { signIn: "/signup" },
+  pages: { signIn: "/login" },
   providers,
   callbacks: {
     async jwt({ token, user }) {

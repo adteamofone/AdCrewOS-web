@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/signup");
+  if (!session?.user?.id) redirect("/login");
 
   const data = await getDashboardData(session.user.id);
 

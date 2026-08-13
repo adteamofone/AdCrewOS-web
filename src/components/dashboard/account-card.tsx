@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import Link from "next/link";
 import { Badge, Button, Card } from "@/components/ui/primitives";
 import { MetricsChart } from "@/components/dashboard/metrics-chart";
 import { resumeAccount } from "@/app/actions";
@@ -24,7 +25,12 @@ export function AccountCard({ account }: { account: AccountSummary }) {
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-display font-semibold text-text">{account.name}</span>
+            <Link
+              href={`/dashboard/accounts/${account.id}`}
+              className="font-display font-semibold text-text hover:text-primary hover:underline"
+            >
+              {account.name}
+            </Link>
             {account.isDemo && <Badge tone="warn">Demo</Badge>}
           </div>
           <div className="mt-0.5 text-xs uppercase tracking-wide text-muted">{account.platform}</div>
@@ -47,16 +53,24 @@ export function AccountCard({ account }: { account: AccountSummary }) {
           Pause @ {formatMetric(account.metric, account.pauseThreshold)} · Scale @{" "}
           {formatMetric(account.metric, account.scaleThreshold)}
         </span>
-        {paused && (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={pending}
-            onClick={() => startTransition(() => resumeAccount(account.id))}
+        <span className="flex items-center gap-2">
+          {paused && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={pending}
+              onClick={() => startTransition(() => resumeAccount(account.id))}
+            >
+              Resume
+            </Button>
+          )}
+          <Link
+            href={`/dashboard/accounts/${account.id}`}
+            className="text-primary hover:underline"
           >
-            Resume
-          </Button>
-        )}
+            Details →
+          </Link>
+        </span>
       </div>
     </Card>
   );

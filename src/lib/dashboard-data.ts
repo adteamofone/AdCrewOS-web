@@ -113,3 +113,77 @@ export async function getDashboardData(userId: string) {
 }
 
 export type DashboardData = Awaited<ReturnType<typeof getDashboardData>>;
+
+/** Full detail for one account: deeper history + its own event feed. */
+export async function getAccountDetail(userId: string, accountId: string) {
+  const account = await prisma.adAccount.findFirst({
+    where: { id: accountId, userId },
+    include: {
+      targets: true,
+      metricSnapshots: { orderBy: { ts: "desc" }, take: 336 },
+    },
+  });
+  if (!account) return null;
+
+  const target = account.targets[0];
+  const metric = (target?.metric ?? "ROAS") as Metric;
+  const snaps = [...account.metricSnapshots].reverse(); // oldest -> newest
+  const latest = account.metricSnapshots[0] ?? null;
+  const cutoff24 = Date.now() - 24 * 3600 * 1000;
+  const last24 = account.metricSnapshots.filter((s) => s.ts.getTime() >= cutoff24);
+  const spend24h = last24.reduce((s, x) => s + x.spend, 0);
+  const clicks24h = last24.reduce((s, x) => s + x.clicks, 0);
+  const conversions24h = last24.reduce((s, x) => s + x.conversions, 0);
+
+  const events = await prisma.automationEvent.findMany({
+    where: { adAccountId: account.id },
+    orderBy: { createdAt: "desc" },
+    take: 30,
+  });
+
+  return {
+    id: account.id,
+    name: account.name,
+    platform: account.platform,
+    status: account.status,
+    isDemo: account.isDemo,
+    currency: account.currency,
+    metric,
+    targetValue: target?.targetValue ?? 0,
+    pauseThreshold: target?.pauseThreshold ?? 0,
+    scaleThreshold: target?.scaleThreshold ?? 0,
+    latest: latest
+      ? {
+          spend: latest.spend,
+          clicks: latest.clicks,
+          conversions: latest.conversions,
+          ctr: latest.ctr,
+          cpc: latest.cpc,
+          cpa: latest.cpa,
+          roas: latest.roas,
+          primary: metricValue(latest, metric),
+          ts: latest.ts.toISOString(),
+        }
+      : null,
+    spend24h,
+    clicks24h,
+    conversions24h,
+    series: snaps.map((s) => ({
+      ts: s.ts.toISOString(),
+      value: metricValue(s, metric),
+      spend: s.spend,
+    })),
+    events: events.map((e) => ({
+      id: e.id,
+      type: e.type,
+      status: e.status,
+      reason: e.reason,
+      proposedPct: e.proposedPct,
+      createdAt: e.createdAt.toISOString(),
+      accountName: account.name,
+      platform: account.platform,
+    })),
+  };
+}
+
+export type AccountDetail = NonNullable<Awaited<ReturnType<typeof getAccountDetail>>>;

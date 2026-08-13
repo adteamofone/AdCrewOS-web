@@ -36,7 +36,7 @@ function SiteNav() {
         <a href="#agency" className="hover:text-text">For agencies</a>
       </nav>
       <div className="flex items-center gap-3">
-        <Link href="/signup" className="text-sm text-muted hover:text-text">Log in</Link>
+        <Link href="/login" className="text-sm text-muted hover:text-text">Log in</Link>
         <ButtonLink href="/signup" size="sm">Start free</ButtonLink>
       </div>
     </header>

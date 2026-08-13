@@ -14,7 +14,7 @@ export const metadata = { title: "Settings — AdCrewOS" };
 
 export default async function SettingsPage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/signup");
+  if (!session?.user?.id) redirect("/login");
 
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: session.user.id },
