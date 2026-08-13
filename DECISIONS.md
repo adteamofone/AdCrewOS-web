@@ -82,3 +82,26 @@ Implementation:
 
 Still placeholder: exact prices (Charles may fine-tune); annual plans + founding-member
 lifetime lock are planned but not yet built.
+
+## Production launch verification (2026-08-13)
+
+Infra completed on team `ad-crew-os`:
+- Env injected to `adcrew-os-web` (prod/preview/dev): AUTH_SECRET/NEXTAUTH_SECRET,
+  TOKEN_ENCRYPTION_KEY, CRON_SECRET, APP_URL/NEXTAUTH_URL, ENABLE_DEMO, ALERT_FROM_EMAIL,
+  PRICE_*_CENTS. No secrets in the repo.
+- Neon Postgres schema synced (`prisma db push`).
+- **Vercel Blob store `adcrewos-blob` created and connected** → BLOB_READ_WRITE_TOKEN
+  auto-injected; logo uploads + stored report PDFs live.
+- Prod deploy READY at https://adcrew-os-web.vercel.app (adcrewos.com wiring: see DEVELOPMENT.md).
+
+Live end-to-end verified against production (demo-data path):
+- Signup (Solo) → checkout gracefully skipped w/o Stripe key → 4-step onboarding →
+  Skip→demo seeding → dashboard cockpit.
+- Engine via `/api/cron/poll-accounts` (Bearer CRON_SECRET): protective breach →
+  AUTO_PAUSE (account PAUSED, Resume works); scale beat → SCALE_PROPOSAL **PENDING**,
+  never auto-executed; one-tap Approve +20% → SCALE_APPLIED; Dismiss works.
+- Reports: Solo PDF renders the AdCrewOS mark; after uploading a logo in /settings
+  (Agency), the same report renders the uploaded logo. Both verified from downloaded PDFs.
+
+Still gated on external credentials (env vars already wired): Stripe live/test keys,
+Resend, Twilio, Google Ads OAuth + dev token, Meta app + App Review, adcrewos.com DNS.
