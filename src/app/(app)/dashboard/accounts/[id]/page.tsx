@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getAccountDetail } from "@/lib/dashboard-data";
 import { AlertFeed } from "@/components/dashboard/alert-feed";
+import { ThresholdStepper } from "@/components/dashboard/threshold-stepper";
 import { MetricsChart } from "@/components/dashboard/metrics-chart";
 import { ResumeButton } from "@/components/dashboard/resume-button";
 import { Badge, Card, ButtonLink } from "@/components/ui/primitives";
@@ -98,15 +99,21 @@ export default async function AccountDetailPage({
       <Card className="mt-6 p-5">
         <h2 className="font-display text-sm font-semibold text-text">Guardrails</h2>
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Rail label={`Target ${account.metric}`} value={formatMetric(account.metric, account.targetValue)} tone="text-text" />
-          <Rail label="Protective pause at" value={formatMetric(account.metric, account.pauseThreshold)} tone="text-error" />
-          <Rail label="Scale proposal at" value={formatMetric(account.metric, account.scaleThreshold)} tone="text-success" />
+          <Rail label={`Target ${account.metric}`}>
+            <ThresholdStepper accountId={account.id} field="targetValue" metric={account.metric} value={account.targetValue} />
+          </Rail>
+          <Rail label="Protective pause at">
+            <ThresholdStepper accountId={account.id} field="pauseThreshold" metric={account.metric} value={account.pauseThreshold} />
+          </Rail>
+          <Rail label="Scale proposal at">
+            <ThresholdStepper accountId={account.id} field="scaleThreshold" metric={account.metric} value={account.scaleThreshold} />
+          </Rail>
         </div>
         <p className="mt-3 text-xs text-muted">
           Cross the pause line and the engine pauses this account immediately — no approval
           needed. Beat the scale line and you get a one-tap proposal; nothing scales without
-          your approval. Adjust thresholds in{" "}
-          <Link href="/settings" className="underline hover:text-text">Settings</Link>.
+          your approval. Use the arrows to adjust any line by 0.1 — changes save automatically
+          and take effect on the next poll.
         </p>
       </Card>
 
@@ -132,11 +139,11 @@ function Kpi({ label, value, accent }: { label: string; value: string; accent?: 
   );
 }
 
-function Rail({ label, value, tone }: { label: string; value: string; tone: string }) {
+function Rail({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="rounded-lg border border-border bg-bg/50 p-4">
       <div className="text-[10px] uppercase tracking-wide text-muted">{label}</div>
-      <div className={`mt-1 font-display text-lg font-bold ${tone}`}>{value}</div>
+      <div className="mt-1">{children}</div>
     </div>
   );
 }

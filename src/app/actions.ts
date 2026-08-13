@@ -138,3 +138,27 @@ export async function saveTargets(
   }
   revalidatePath("/dashboard");
 }
+
+/** Inline threshold adjustment from the cockpit (target / pause / scale). */
+export async function updateThreshold(
+  accountId: string,
+  field: "targetValue" | "pauseThreshold" | "scaleThreshold",
+  value: number,
+) {
+  const userId = await requireUserId();
+  if (!Number.isFinite(value) || value <= 0 || value > 1_000_000) {
+    throw new Error("Invalid value");
+  }
+  const account = await prisma.adAccount.findFirst({
+    where: { id: accountId, userId },
+    include: { targets: true },
+  });
+  const target = account?.targets[0];
+  if (!target) throw new Error("Not found");
+  await prisma.target.update({
+    where: { id: target.id },
+    data: { [field]: Math.round(value * 100) / 100 },
+  });
+  revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/accounts/${accountId}`);
+}

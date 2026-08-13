@@ -6,6 +6,7 @@ import { Badge, Button, Card } from "@/components/ui/primitives";
 import { MetricsChart } from "@/components/dashboard/metrics-chart";
 import { resumeAccount } from "@/app/actions";
 import { formatCurrency, formatMetric } from "@/lib/utils";
+import { ThresholdStepper } from "@/components/dashboard/threshold-stepper";
 import type { AccountSummary } from "@/lib/dashboard-data";
 
 const METRIC_COLOR: Record<string, string> = {
@@ -38,21 +39,28 @@ export function AccountCard({ account }: { account: AccountSummary }) {
         <Badge tone={paused ? "error" : "success"}>{paused ? "Paused" : "Active"}</Badge>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-3">
+      <div className="mt-4 grid grid-cols-2 gap-3">
         <Stat label={account.metric} value={formatMetric(account.metric, primary)} accent={color} />
         <Stat label="Spend 24h" value={formatCurrency(account.spend24h, account.currency)} />
-        <Stat label="Target" value={formatMetric(account.metric, account.targetValue)} />
       </div>
 
       <div className="mt-4">
         <MetricsChart series={account.series} color={color} label={account.id} />
       </div>
 
-      <div className="mt-3 flex items-center justify-between text-xs text-muted">
-        <span>
-          Pause @ {formatMetric(account.metric, account.pauseThreshold)} · Scale @{" "}
-          {formatMetric(account.metric, account.scaleThreshold)}
-        </span>
+      <div className="mt-3 grid grid-cols-3 gap-2 rounded-lg border border-border bg-bg/50 p-2.5">
+        <Guardrail label="Target">
+          <ThresholdStepper accountId={account.id} field="targetValue" metric={account.metric} value={account.targetValue} size="sm" />
+        </Guardrail>
+        <Guardrail label="Pause @">
+          <ThresholdStepper accountId={account.id} field="pauseThreshold" metric={account.metric} value={account.pauseThreshold} size="sm" />
+        </Guardrail>
+        <Guardrail label="Scale @">
+          <ThresholdStepper accountId={account.id} field="scaleThreshold" metric={account.metric} value={account.scaleThreshold} size="sm" />
+        </Guardrail>
+      </div>
+
+      <div className="mt-3 flex items-center justify-end text-xs text-muted">
         <span className="flex items-center gap-2">
           {paused && (
             <Button
@@ -73,6 +81,15 @@ export function AccountCard({ account }: { account: AccountSummary }) {
         </span>
       </div>
     </Card>
+  );
+}
+
+function Guardrail({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-wide text-muted">{label}</div>
+      <div className="mt-0.5">{children}</div>
+    </div>
   );
 }
 
