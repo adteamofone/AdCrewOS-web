@@ -66,7 +66,7 @@ export default async function AccountDetailPage({
         <Kpi label="Spend (24h)" value={formatCurrency(account.spend24h, account.currency)} />
         <Kpi label="Clicks (24h)" value={formatNumber(account.clicks24h)} />
         <Kpi label="Conversions (24h)" value={formatNumber(Math.round(account.conversions24h * 100) / 100)} />
-        <Kpi label="CTR" value={l ? `${(l.ctr * 100).toFixed(2)}%` : "—"} />
+        <Kpi label="CTR" value={l ? `${l.ctr.toFixed(2)}%` : "—"} />
         <Kpi label="CPC" value={l ? formatMetric("CPC", l.cpc) : "—"} />
         <Kpi label="CPA" value={l ? formatMetric("CPA", l.cpa) : "—"} />
         <Kpi label="ROAS" value={l ? formatMetric("ROAS", l.roas) : "—"} />
