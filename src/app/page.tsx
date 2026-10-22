@@ -2,6 +2,10 @@ import Link from "next/link";
 import { ButtonLink, Card, Badge } from "@/components/ui/primitives";
 import { Logo } from "@/components/brand/logo";
 import { CockpitMockup } from "@/components/marketing/cockpit-mockup";
+import { SocialProof } from "@/components/marketing/social-proof";
+import { CaseStudies } from "@/components/marketing/case-studies";
+import { Screenshots } from "@/components/marketing/screenshots-preview";
+import { FaqAndComparison } from "@/components/marketing/faq-comparison";
 import { PLANS } from "@/lib/plans";
 
 export default function LandingPage() {
@@ -19,6 +23,10 @@ export default function LandingPage() {
         <HowItWorks />
         <Pricing />
         <AgencySection />
+        <SocialProof />
+        <CaseStudies />
+        <Screenshots />
+        <FaqAndComparison />
         <FinalCta />
         <Footer />
       </div>
@@ -47,15 +55,13 @@ function Hero() {
   return (
     <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 pt-10 pb-16 md:grid-cols-2 md:pt-20">
       <div>
-        <Badge tone="primary" className="mb-5">
-          Autonomous ad ops · Google &amp; Meta
-        </Badge>
+        <Badge tone="primary" className="mb-5">Autonomous ad ops · Google & Meta</Badge>
         <h1 className="font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-text sm:text-5xl md:text-6xl">
           Your ad budget doesn&apos;t sleep.
           <span className="block text-primary">Now you can.</span>
         </h1>
         <p className="mt-5 max-w-lg text-lg text-muted">
-          AdCrewOS watches every dollar across Google &amp; Meta around the clock. It kills
+          AdCrewOS watches every dollar across Google & Meta around the clock. It kills
           the bleed the second a campaign turns — and scales the winners on your one-tap
           say-so. No agency. No 2am dashboard checks.
         </p>
@@ -241,7 +247,7 @@ function AgencySection() {
             your logo on it, not ours.
           </p>
           <ul className="mt-6 space-y-2.5 text-sm text-text/90">
-            <li className="flex gap-2.5"><span className="text-success">✓</span> Per-client targets &amp; protective floors</li>
+            <li className="flex gap-2.5"><span className="text-success">✓</span> Per-client targets & protective floors</li>
             <li className="flex gap-2.5"><span className="text-success">✓</span> White-labeled PDF reports</li>
             <li className="flex gap-2.5"><span className="text-success">✓</span> One alert feed across the whole book</li>
           </ul>
